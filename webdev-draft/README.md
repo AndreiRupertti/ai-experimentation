@@ -5,7 +5,9 @@
 
 ⚛️ A visual, interactive canvas for planning and designing React component hierarchies with drag-and-drop functionality and real-time JSX visualization.
 
-Perfect for React developers who want to visualize component architecture before coding, plan complex applications, or create documentation for existing projects.
+Bit more complex than NotePad, a lot less complex than UML/Stately/ReactFlow
+
+Perfect for React developers who want a quick way to draft component structures, manage props, and visualize data flow before coding.
 
 ## 🚀 Getting Started
 
@@ -15,7 +17,7 @@ Open `index.html` in a modern web browser and start planning your React componen
 
 - **Visual Component Design**: Interactive canvas with drag-and-drop component organization
 - **Real-time JSX Preview**: Components render as actual JSX with VS Code-style syntax highlighting
-- **Component Management**: Add props, state, hooks, and configure component types
+- **Component Management**: Add props, hooks, and configure component types
 - **Connection System**: Draw arrows between components to visualize data flow
 - **Auto-save & Export**: Projects save automatically and can be exported as JSON files
 
