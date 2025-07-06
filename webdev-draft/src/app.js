@@ -3569,6 +3569,73 @@ function removeConnectedTrigger(connectionId) {
   }
 }
 
+// ----------- Event Listeners for HTML Elements -------------
+
+// Header buttons
+document.getElementById("shareBtn").addEventListener("click", () => {
+  shareProject();
+});
+
+document.getElementById("exportBtn").addEventListener("click", () => {
+  exportProject();
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  importProject();
+});
+
+
+// Floating toolbar buttons
+document.getElementById("pointerBtn").addEventListener("click", () => {
+  selectToolbar('pointerBtn');
+});
+
+document.getElementById("connectBtn").addEventListener("click", () => {
+  selectToolbar('connectBtn');
+});
+
+document.getElementById("notesBtn").addEventListener("click", () => {
+  selectToolbar('notesBtn');
+});
+
+document.getElementById("clearBtn").addEventListener("click", () => {
+  selectToolbar('clearBtn');
+});
+
+// Configuration drawer buttons
+document.getElementById("closeDrawerBtn").addEventListener("click", () => {
+  closeConfigDrawer();
+});
+
+document.getElementById("addPropBtn").addEventListener("click", () => {
+  addProp();
+});
+
+document.getElementById("addHookInputBtn").addEventListener("click", () => {
+  addHookInput();
+});
+
+document.getElementById("addTriggerInputBtn").addEventListener("click", () => {
+  addTriggerInput();
+});
+
+// Configuration input change events
+document.getElementById("componentName").addEventListener("change", () => {
+  updateComponentName();
+});
+
+document.getElementById("innerHtml").addEventListener("change", () => {
+  updateInnerHtml();
+});
+
+document.getElementById("eventBoxName").addEventListener("change", () => {
+  updateEventBoxName();
+});
+
+document.getElementById("eventBoxDescription").addEventListener("change", () => {
+  updateEventBoxDescription();
+});
+
 // Cleanup pending URL updates on page unload
 window.addEventListener('beforeunload', () => {
   if (urlUpdateTimeout) {

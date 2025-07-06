@@ -9,9 +9,9 @@ Bit more complex than NotePad, a lot less complex than UML/Stately/ReactFlow
 
 Perfect for React developers who want a quick way to draft component structures, manage props, and visualize data flow before coding.
 
-## 🚀 Getting Started
 
-Open `index.html` in a modern web browser and start planning your React components!
+URL: https://react-components-draft.pages.dev/
+
 
 ## ✨ Key Features
 
