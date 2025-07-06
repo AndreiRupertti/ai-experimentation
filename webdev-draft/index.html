@@ -133,77 +133,6 @@
       overflow: hidden;
     }
     
-    .sidebar {
-      width: 350px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-left: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 20px;
-      overflow-y: auto;
-      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-      order: 2;
-    }
-    
-    .sidebar h3 {
-      margin: 0 0 16px 0;
-      color: #2d3748;
-      font-size: 18px;
-      font-weight: 700;
-    }
-    
-    .instructions-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    
-    .instructions-list li {
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      background: rgba(102, 126, 234, 0.1);
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
-      font-size: 14px;
-      line-height: 1.4;
-    }
-    
-    .instructions-list li strong {
-      color: #667eea;
-      font-weight: 700;
-    }
-    
-    .legend {
-      margin-top: 24px;
-      padding: 16px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    .legend h4 {
-      margin: 0 0 12px 0;
-      font-size: 16px;
-      color: #2d3748;
-      font-weight: 700;
-    }
-    
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #4a5568;
-    }
-    
-    .legend-color {
-      width: 20px;
-      height: 20px;
-      margin-right: 12px;
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    
     .canvas-container {
       flex: 1;
       position: relative;
@@ -390,26 +319,283 @@
       background: rgba(255, 255, 255, 0.3);
     }
     
-    /* Floating Toolbar */
+    /* Floating Toolbar - Miro Style */
     .floating-toolbar {
       position: absolute;
-      bottom: 20px;
+      top: 20px;
       left: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(12px);
       border-radius: 12px;
-      padding: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      padding: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 4px;
       z-index: 150;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(0, 0, 0, 0.08);
     }
     
-    .floating-toolbar .btn {
+    .toolbar-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      position: relative;
+      color: #1f2937;
+    }
+    
+    .toolbar-btn:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+    
+    .toolbar-btn:active,
+    .toolbar-btn.active {
+      background: #667eea;
+      color: white;
+    }
+    
+    .toolbar-btn.active:hover {
+      background: #667eea;
+    }
+    
+    .toolbar-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Header buttons */
+    .header-btn {
+      background: none;
+      border: none;
+      color: #667eea;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .header-btn:hover {
+      background: rgba(102, 126, 234, 0.1);
+      color: #5a67d8;
+    }
+
+    /* Dropdown styles */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background: white;
+      min-width: 120px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      border-radius: 8px;
+      z-index: 1000;
+      border: 1px solid rgba(102, 126, 234, 0.1);
+      overflow: hidden;
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
+    .dropdown-item {
+      color: #2d3748;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      font-size: 14px;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .dropdown-item:hover {
+      background-color: rgba(102, 126, 234, 0.1);
+      color: #667eea;
+    }
+
+    /* Help Modal Styles */
+    .help-modal {
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      width: 80vw;
+      height: 80vh;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(102, 126, 234, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      padding: 0;
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .help-modal::backdrop {
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+    }
+
+    .help-modal-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .help-modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .help-modal-header h3 {
       margin: 0;
-      padding: 8px 14px;
-      font-size: 13px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .help-close-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease;
+    }
+
+    .help-close-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .help-modal-body {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 32px;
+    }
+
+    .help-section {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .help-section h4 {
+      margin: 0 0 20px 0;
+      font-size: 20px;
+      color: #2d3748;
+      font-weight: 700;
+    }
+
+    .instructions-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .instructions-list li {
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      background: rgba(102, 126, 234, 0.08);
+      border-radius: 12px;
+      border-left: 4px solid #667eea;
+      font-size: 15px;
+      line-height: 1.5;
+      transition: all 0.2s ease;
+    }
+
+    .instructions-list li:hover {
+      background: rgba(102, 126, 234, 0.12);
+      transform: translateX(4px);
+    }
+
+    .instructions-list li strong {
+      color: #667eea;
+      font-weight: 700;
+    }
+
+    .legend {
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 16px;
+      border: 1px solid rgba(102, 126, 234, 0.1);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    }
+
+    .legend h4 {
+      margin: 0 0 16px 0;
+      font-size: 18px;
+      color: #2d3748;
+      font-weight: 700;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 15px;
+      color: #4a5568;
+      transition: all 0.2s ease;
+    }
+
+    .legend-item:hover {
+      color: #2d3748;
+      transform: translateX(4px);
+    }
+
+    .legend-color {
+      width: 24px;
+      height: 24px;
+      margin-right: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Responsive design for smaller screens */
+    @media (max-width: 768px) {
+      .help-modal {
+        width: 95vw;
+        height: 90vh;
+      }
+
+      .help-modal-body {
+        grid-template-columns: 1fr;
+        gap: 24px;
+        padding: 24px;
+      }
+
+      .instructions-list li {
+        padding: 12px 16px;
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -417,55 +603,68 @@
   <div class="app-container">
     <div class="header">
       <div class="title">RC Draft Tool</div>
+      <div class="toolbar">
+        <button class="header-btn" id="shareBtn" title="Share Project">
+          Share
+        </button>
+        <div class="dropdown">
+          <button class="header-btn dropdown-toggle" title="Options">
+            Options ▾
+          </button>
+          <div class="dropdown-content">
+            <button class="dropdown-item" onclick="exportProject()">
+              💾 Export
+            </button>
+            <button class="dropdown-item" onclick="importProject()">
+              📤 Import
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
     
     <div class="main-content">
       <div class="canvas-container">
         <canvas id="board"></canvas>
         
-        <!-- Floating Toolbar -->
+        <!-- Floating Toolbar - Miro Style -->
         <div class="floating-toolbar">
-          <button class="btn export" onclick="exportProject()" title="Export Project">
-            <span>💾</span>
+          <button class="toolbar-btn active" id="pointerBtn" onclick="selectToolbar('pointerBtn')" title="Pointer">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.001 8.936v2.045l-.003.019C15.977 11 11 15.977 11 21.998l-.012.002H8.935L2 3.178V3l1-1h.179L22 8.936Z" />
+            </svg>
           </button>
-          <button class="btn import" onclick="importProject()" title="Import Project">
-            <span>📤</span>
+          
+          <!-- <button class="toolbar-btn" id="grabBtn" onclick="selectToolbar('grabBtn')" title="Grab">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13 11.5C13 10.67 12.33 10 11.5 10S10 10.67 10 11.5S10.67 13 11.5 13S13 12.33 13 11.5M13 9.5C13 8.67 12.33 8 11.5 8S10 8.67 10 9.5S10.67 11 11.5 11S13 10.33 13 9.5M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3M19 19H5V5H19V19Z"/>
+            </svg>
+          </button> -->
+          
+          <button class="toolbar-btn" id="connectBtn" onclick="selectToolbar('connectBtn')" title="Connect">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 12h16" fill="none" stroke-dasharray="3,2"/>
+              <path d="m12 5l7 7-7 7" fill="currentColor" stroke="none"/>
+            </svg>
           </button>
-          <button class="btn share" onclick="shareProject()" title="Share Project">
-            <span>🔗</span>
+          
+          <button class="toolbar-btn" id="notesBtn" onclick="selectToolbar('notesBtn')" title="Notes">
+            <svg viewBox="0 0 24 24" fill-rule="evenodd" fill="currentColor">
+              <path d="M5 2a3 3 0 0 0-3 3v14a3 3 0 0 0 3 3h7c5.523 0 10-4.477 10-10V5a3 3 0 0 0-3-3H5Zm15 7V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1v-.004h4a3 3 0 0 0 3-3V13l1-1h4a3 3 0 0 0 3-3Zm-6.952 10.932A4.977 4.977 0 0 0 14 16.996V14h3a4.977 4.977 0 0 0 2.932-.95 8.004 8.004 0 0 1-6.884 6.882Z"/>
+            </svg>
           </button>
-          <button class="btn clear" onclick="clearCanvas()" title="Clear Canvas">
-            <span>🗑️</span>
+          
+          <button class="toolbar-btn" id="clearBtn" onclick="selectToolbar('clearBtn')" title="Clear Canvas">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7H6V19ZM19 4H15.5L14.5 3H9.5L8.5 4H5V6H19V4Z"/>
+            </svg>
           </button>
-        </div>
-      </div>
-      
-      <div class="sidebar">
-        <h3>🚀 Quick Start</h3>
-        <ul class="instructions-list">
-          <li><strong>Double-click</strong> on canvas to create a new component</li>
-          <li><strong>Click</strong> a component to select it</li>
-          <li><strong>Ctrl+click</strong> a component to duplicate it</li>
-          <li><strong>Drag & drop</strong> components to organize hierarchy</li>
-          <li><strong>Click the ▸/▾</strong> to expand/collapse components</li>
-          <li><strong>Connection Mode:</strong> Click 🔗 Connect button or press 'C' key, then click two components to create arrows. Press Esc to exit.</li>
-          <li><strong>Share:</strong> Click the 🔗 Share button to copy a shareable URL of your current canvas</li>
-        </ul>
-        
-        <div class="legend">
-          <h4>Node Types</h4>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #2d3142;"></div>
-            <span>Component</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #ffd60a;"></div>
-            <span>Hook</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: #ff6b9d;"></div>
-            <span>Trigger</span>
-          </div>
+
+          <button class="toolbar-btn" id="helpBtn" title="Help & Quick Start" popovertarget="helpModal">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11 16h2v2h-2v-2Zm3-6a2 2 0 1 0-4 0H8a4 4 0 1 1 5 3.874v1.122h-2V13l1-1a2 2 0 0 0 2-2Zm6 2a8 8 0 1 0-16 0 8 8 0 0 0 16 0Zm2 0c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10Z"/>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -545,6 +744,49 @@
           <div class="form-group">
             <label for="eventBoxDescription">Description</label>
             <textarea id="eventBoxDescription" class="form-input" placeholder="Event description" onchange="updateEventBoxDescription()" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpModal" popover class="help-modal">
+    <div class="help-modal-content">
+      <div class="help-modal-header">
+        <h3>🚀 Quick Start Guide</h3>
+        <button class="help-close-btn" popovertarget="helpModal" popovertargetaction="hide">×</button>
+      </div>
+      
+      <div class="help-modal-body">
+        <div class="help-section">
+          <h4>Getting Started</h4>
+          <ul class="instructions-list">
+            <li><strong>Double-click</strong> on canvas to create a new component</li>
+            <li><strong>Click</strong> a component to select it</li>
+            <li><strong>Ctrl+click</strong> a component to duplicate it</li>
+            <li><strong>Drag & drop</strong> components to organize hierarchy</li>
+            <li><strong>Click the ▸/▾</strong> to expand/collapse components</li>
+            <li><strong>Connection Mode:</strong> Click the dashed-arrow button or press 'C' key, then click two components to create connections. Press Esc to exit.</li>
+            <li><strong>Share:</strong> Click the Share button to copy a shareable URL of your current canvas</li>
+          </ul>
+        </div>
+        
+        <div class="help-section">
+          <div class="legend">
+            <h4>Node Types</h4>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #2d3142;"></div>
+              <span>Component</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ffd60a;"></div>
+              <span>Hook</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background: #ff6b9d;"></div>
+              <span>Trigger</span>
+            </div>
           </div>
         </div>
       </div>

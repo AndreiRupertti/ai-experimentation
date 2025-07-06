@@ -353,7 +353,7 @@ function resetConnectionMode() {
   isConnecting = false;
   setCursor(CURSORS.DEFAULT);
   
-  const connectionBtn = document.getElementById('connectionModeBtn');
+  const connectionBtn = document.getElementById("connectBtn");
   if (connectionBtn) {
     connectionBtn.classList.remove('active');
     connectionBtn.style.background = '';
@@ -478,30 +478,54 @@ function drawShadow(file) {
 
 // Text wrapping utility
 function drawWrappedText(text, x, y, maxWidth, lineHeight = 16) {
-  const words = text.split(' ');
-  let line = '';
+  // First split by line breaks to handle explicit line breaks
+  const lines = text.split('\n');
   let currentY = y;
-  let lineCount = 0;
+  let totalLineCount = 0;
   
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    const metrics = ctx.measureText(testLine);
-    const testWidth = metrics.width;
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const lineText = lines[lineIndex];
     
-    if (testWidth > maxWidth && n > 0) {
-      ctx.fillText(line, x, currentY);
-      line = words[n] + ' ';
+    // If the line is empty (from consecutive \n), just add vertical space
+    if (lineText.trim() === '') {
       currentY += lineHeight;
-      lineCount++;
-    } else {
-      line = testLine;
+      totalLineCount++;
+      continue;
     }
+    
+    // Split each line by words for word wrapping within the line
+    const words = lineText.split(' ');
+    let line = '';
+    
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+      
+      if (testWidth > maxWidth && n > 0) {
+        ctx.fillText(line, x, currentY);
+        line = words[n] + ' ';
+        currentY += lineHeight;
+        totalLineCount++;
+      } else {
+        line = testLine;
+      }
+    }
+    
+    // Draw the last line of this text line
+    if (line.trim()) {
+      ctx.fillText(line, x, currentY);
+    }
+    
+    // Add line spacing if not the last line
+    if (lineIndex < lines.length - 1) {
+      currentY += lineHeight;
+    }
+    totalLineCount++;
   }
-  ctx.fillText(line, x, currentY);
-  lineCount++;
   
   // Return both the final Y position and the number of lines
-  return { finalY: currentY, lineCount: lineCount };
+  return { finalY: currentY, lineCount: totalLineCount };
 }
 
 // Helper function to calculate wrapped text line count without drawing
@@ -512,28 +536,45 @@ function calculateWrappedTextLines(text, maxWidth, font = "12px 'Fira Code', 'Mo
   const originalFont = ctx.font;
   ctx.font = font;
   
-  const words = text.split(' ');
-  let line = '';
-  let lineCount = 0;
+  // First split by line breaks to handle explicit line breaks
+  const lines = text.split('\n');
+  let totalLineCount = 0;
   
-  for (let n = 0; n < words.length; n++) {
-    const testLine = line + words[n] + ' ';
-    const metrics = ctx.measureText(testLine);
-    const testWidth = metrics.width;
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const lineText = lines[lineIndex];
     
-    if (testWidth > maxWidth && n > 0) {
-      line = words[n] + ' ';
-      lineCount++;
-    } else {
-      line = testLine;
+    // If the line is empty (from consecutive \n), count it as one line
+    if (lineText.trim() === '') {
+      totalLineCount++;
+      continue;
     }
+    
+    // Split each line by words for word wrapping within the line
+    const words = lineText.split(' ');
+    let line = '';
+    let lineCount = 0;
+    
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+      
+      if (testWidth > maxWidth && n > 0) {
+        line = words[n] + ' ';
+        lineCount++;
+      } else {
+        line = testLine;
+      }
+    }
+    lineCount++; // Count the last line
+    
+    totalLineCount += lineCount;
   }
-  lineCount++;
   
   // Restore original font
   ctx.font = originalFont;
   
-  return lineCount;
+  return totalLineCount;
 }
 
 // JSX Rendering utilities
@@ -905,8 +946,8 @@ canvas.addEventListener("mouseup", (e) => {
     // Find and remove dragged file from its current parent
     const currentParentInfo = findParentOfComponent(draggingFile, files);
     if (currentParentInfo.parent) {
-      // Remove from current parent and update its height
-      removeFile(draggingFile, files);
+      // Remove from current parent's children array
+      removeFile(draggingFile, currentParentInfo.list);
       updateParentHeight(currentParentInfo.parent);
       repositionChildrenInParent(currentParentInfo.parent);
     } else {
@@ -927,9 +968,9 @@ canvas.addEventListener("mouseup", (e) => {
     if (!isTopLevel) {
       // This is a child component being dragged to canvas - promote it to top level
       const currentParentInfo = findParentOfComponent(draggingFile, files);
-      if (currentParentInfo.parent) {
-        // Remove from current parent
-        removeFile(draggingFile, files);
+      if (currentParentInfo.parent && currentParentInfo.list) {
+        // Remove from current parent's children array
+        removeFile(draggingFile, currentParentInfo.list);
         
         // Add to top-level files
         files.push(draggingFile);
@@ -2565,61 +2606,59 @@ function findParentOfComponent(targetFile, searchList, parent = null) {
 
 // ----------- Toolbar Functions -------------
 
-function addHookEvent() {
-  // Find the center of the canvas for initial placement
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  
-  saveState(); // Save state before adding for undo
-  
-  // Create a new hook event box
-  const eventBox = {
-    name: 'useHook',
-    description: 'Hook event description',
-    x: centerX - 100,
-    y: centerY - 30,
-    w: 200,
-    h: 60,
-    type: 'HOOK',
-    isEventBox: true,
-    parentComponent: null
-  };
-  
-  files.push(eventBox);
-  selectedFile = eventBox;
-  draw();
+// ----------- Toolbar Functions -------------
+
+function clearCanvas() {
+  if (confirm('Are you sure you want to clear all components? This cannot be undone.')) {
+    saveState(); // Save state before clearing for undo
+    files = [];
+    connections = []; // Clear all connections
+    clearSelection();
+    hoveredFile = null;
+    draw();
+  }
 }
 
-function addTriggerEvent() {
-  // Find the center of the canvas for initial placement
-  const centerX = canvas.width / 2;
-  const centerY = canvas.height / 2;
-  
-  saveState(); // Save state before adding for undo
-  
-  // Create a new trigger event box
-  const eventBox = {
-    name: 'NewTrigger',
-    description: 'Trigger event description',
-    x: centerX - 100,
-    y: centerY - 30,
-    w: 200,
-    h: 60,
-    type: 'TRIGGER',
-    isEventBox: true,
-    parentComponent: null
-  };
-  
-  files.push(eventBox);
-  selectedFile = eventBox;
-  draw();
+function selectToolbar(idBtn) {
+  const toolbarButtons = document.querySelectorAll(".toolbar-btn");
+
+  const selectionToogle = (activebtn) =>  {
+    toolbarButtons.forEach(btn => {
+      if (btn.id === activebtn) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+
+    switch (idBtn) {
+      case 'connectBtn':
+          toggleConnectionMode();
+          selectionToogle(idBtn);
+          break;
+      case 'grabBtn':
+          selectionToogle(idBtn);
+          break;
+      case 'clearBtn':
+          clearCanvas();
+          break;
+      case 'notesBtn':
+            break;
+      case 'pointerBtn':
+      default:
+        selectionToogle(idBtn);
+        break;
+    }
+
 }
+
 
 // ----------- Connection System Functions -------------
 
 function toggleConnectionMode() {
   isConnecting = !isConnecting;
-  const connectionBtn = document.getElementById('connectionModeBtn');
+  const connectionBtn = document.getElementById("connectBtn")
   
   if (isConnecting) {
     connectionStart = null;
@@ -2627,9 +2666,6 @@ function toggleConnectionMode() {
     selectedFile = null;
     selectedChild = null;
     selectedConnection = null;
-    connectionBtn.classList.add('active');
-    connectionBtn.style.background = 'linear-gradient(135deg, #007acc 0%, #0099ff 100%)';
-    connectionBtn.style.color = 'white';
   } else {
     resetConnectionMode();
   }
@@ -2763,27 +2799,37 @@ function drawArrow(fromX, fromY, toX, toY, isSelected = false, isHovered = false
     ctx.lineWidth = 2;
   }
   
-  // Draw the line
+  // Calculate orthogonal path points
+  const pathPoints = calculateOrthogonalPath(fromX, fromY, toX, toY);
+  
+  // Draw the orthogonal path
   ctx.beginPath();
-  ctx.moveTo(fromX, fromY);
-  ctx.lineTo(toX, toY);
+  ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
+  
+  for (let i = 1; i < pathPoints.length; i++) {
+    ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
+  }
+  
   ctx.stroke();
   
-  // Draw arrowhead
+  // Draw arrowhead at the final point
+  const lastPoint = pathPoints[pathPoints.length - 1];
+  const secondLastPoint = pathPoints[pathPoints.length - 2];
+  
   const headLength = 12;
   const headAngle = Math.PI / 6;
-  const angle = Math.atan2(toY - fromY, toX - fromX);
+  const angle = Math.atan2(lastPoint.y - secondLastPoint.y, lastPoint.x - secondLastPoint.x);
   
   ctx.fillStyle = ctx.strokeStyle;
   ctx.beginPath();
-  ctx.moveTo(toX, toY);
+  ctx.moveTo(lastPoint.x, lastPoint.y);
   ctx.lineTo(
-    toX - headLength * Math.cos(angle - headAngle),
-    toY - headLength * Math.sin(angle - headAngle)
+    lastPoint.x - headLength * Math.cos(angle - headAngle),
+    lastPoint.y - headLength * Math.sin(angle - headAngle)
   );
   ctx.lineTo(
-    toX - headLength * Math.cos(angle + headAngle),
-    toY - headLength * Math.sin(angle + headAngle)
+    lastPoint.x - headLength * Math.cos(angle + headAngle),
+    lastPoint.y - headLength * Math.sin(angle + headAngle)
   );
   ctx.closePath();
   ctx.fill();
@@ -2791,17 +2837,92 @@ function drawArrow(fromX, fromY, toX, toY, isSelected = false, isHovered = false
   ctx.restore();
 }
 
+function calculateOrthogonalPath(fromX, fromY, toX, toY) {
+  const minDistance = 30; // Minimum distance for orthogonal segments
+  const path = [];
+  
+  // Start point
+  path.push({ x: fromX, y: fromY });
+  
+  // Calculate the distance between points
+  const deltaX = toX - fromX;
+  const deltaY = toY - fromY;
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  
+  // Check if we need routing at all (direct connection is clean)
+  if (absX < 5 && absY < 5) {
+    // Very close points, direct connection
+    path.push({ x: toX, y: toY });
+    return path;
+  }
+  
+  // Determine if we can do a simple L-shape or need a more complex route
+  if (absX > minDistance && absY > minDistance) {
+    // Both distances are significant - use simple L-shape routing
+    if (absX > absY) {
+      // Horizontal first, then vertical
+      path.push({ x: fromX + deltaX / 2, y: fromY });
+      path.push({ x: fromX + deltaX / 2, y: toY });
+    } else {
+      // Vertical first, then horizontal  
+      path.push({ x: fromX, y: fromY + deltaY / 2 });
+      path.push({ x: toX, y: fromY + deltaY / 2 });
+    }
+  } else if (absX > absY) {
+    // Primarily horizontal movement
+    if (absX > minDistance * 2) {
+      // Enough space for clean horizontal routing
+      const midX = fromX + deltaX / 2;
+      path.push({ x: midX, y: fromY });
+      path.push({ x: midX, y: toY });
+    } else {
+      // Need to route around - use vertical detour
+      const detourY = fromY + (deltaY > 0 ? minDistance : -minDistance);
+      path.push({ x: fromX, y: detourY });
+      path.push({ x: toX, y: detourY });
+    }
+  } else {
+    // Primarily vertical movement
+    if (absY > minDistance * 2) {
+      // Enough space for clean vertical routing
+      const midY = fromY + deltaY / 2;
+      path.push({ x: fromX, y: midY });
+      path.push({ x: toX, y: midY });
+    } else {
+      // Need to route around - use horizontal detour
+      const detourX = fromX + (deltaX > 0 ? minDistance : -minDistance);
+      path.push({ x: detourX, y: fromY });
+      path.push({ x: detourX, y: toY });
+    }
+  }
+  
+  // End point
+  path.push({ x: toX, y: toY });
+  
+  return path;
+}
+
 function findConnectionAtPosition(x, y) {
   const tolerance = 8; // Tolerance for clicking on connection lines
   
   for (const connection of connections) {
-    if (isPointNearLine(
-      x, y,
+    // Calculate the orthogonal path for this connection
+    const pathPoints = calculateOrthogonalPath(
       connection.fromPoint.x, connection.fromPoint.y,
-      connection.toPoint.x, connection.toPoint.y,
-      tolerance
-    )) {
-      return connection;
+      connection.toPoint.x, connection.toPoint.y
+    );
+    
+    // Check if the point is near any segment of the orthogonal path
+    for (let i = 0; i < pathPoints.length - 1; i++) {
+      if (isPointNearLine(
+        x, y,
+        pathPoints[i].x, pathPoints[i].y,
+        pathPoints[i + 1].x, pathPoints[i + 1].y,
+        tolerance
+      )) {
+        return connection;
+      }
     }
   }
   
@@ -3154,7 +3275,7 @@ function addTriggerInput() {
   addTriggerInputToDOM('', '', index);
 }
 
-function addTriggerInputToDOM(name, description, index) {
+function addTriggerInputToDOM(name, actions, index) {
   const triggerInputsList = document.getElementById('triggerInputsList');
   
   const triggerItem = document.createElement('div');
@@ -3170,12 +3291,12 @@ function addTriggerInputToDOM(name, description, index) {
   `;
   triggerItem.innerHTML = `
     <div style="display: flex; flex-direction: column;">
-      <input type="text" class="form-input" placeholder="Trigger name" value="${name}" 
+      <input type="text" class="form-input" placeholder="Trigger Name (eg. onClick)" value="${name}" 
              id="triggerName_${index}" style="width: 100%; margin-bottom: 0;">
     </div>
     <div style="display: flex; flex-direction: column;">
-      <input type="text" class="form-input" placeholder="Description" value="${description}" 
-             id="triggerDescription_${index}" style="width: 100%; margin-bottom: 0;">
+      <textarea type="textarea" rows="3" class="form-input" placeholder="eg.\n1. Call API\n2. Toast Notification " value="${actions}" 
+             id="triggerActions_${index}" style="width: 100%; margin-bottom: 0;"></textarea>
     </div>
     <div style="display: flex; justify-content: flex-end; gap: 10px;">
       <button class="secondary-btn" onclick="removeTriggerInput(${index})">Cancel</button>
@@ -3199,12 +3320,12 @@ function createTriggerFromInput(index) {
   
   // Get values from the specific input fields
   const nameInput = document.getElementById(`triggerName_${index}`);
-  const descriptionInput = document.getElementById(`triggerDescription_${index}`);
+  const actionsInput = document.getElementById(`triggerActions_${index}`);
   
-  if (!nameInput || !descriptionInput) return;
+  if (!nameInput || !actionsInput) return;
   
   const triggerName = nameInput.value.trim() || 'NewTrigger';
-  const triggerDescription = descriptionInput.value.trim() || 'Trigger event description';
+  const triggerDescription = actionsInput.value.trim() || '1. Handler';
   
   saveState(); // Save state before adding for undo
   
