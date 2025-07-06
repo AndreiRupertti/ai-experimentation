@@ -72,8 +72,10 @@ const FONTS = {
   CODE_SMALL: "12px 'Fira Code', 'Monaco', 'Menlo', monospace",
   CODE_TINY: "11px 'Fira Code', 'Monaco', 'Menlo', monospace",
   COMMENT: "bold 12px 'Fira Code', sans-serif",
+  EVENT_TITLE: "bold 16px 'Fira Code', 'Monaco', 'Menlo', monospace",
+  EVENT_DESCRIPTION: "12px  'Fira Code', 'Monaco', 'Menlo', monospace",
   TOGGLE: "bold 16px sans-serif",
-  TYPE_INDICATOR: "10px sans-serif"
+  TYPE_INDICATOR: "10px sans-serif",
 };
 
 // Layout constants
@@ -225,6 +227,23 @@ let hoveredConnection = null; // Hovered connection for visual feedback
 // Undo functionality
 let history = [];
 let maxHistorySize = 30;
+
+// Load initial state - URL has priority over localStorage
+const initiallyLoadedFromURL = loadFromURL(); // Try to load from URL first
+if (!initiallyLoadedFromURL) {
+  loadFromLocalStorage(); // Fall back to localStorage if no URL state
+}
+
+// Flag to prevent URL updates only during the initial load
+let isInitialLoad = initiallyLoadedFromURL;
+
+// Initial draw
+draw();
+
+// After the initial draw, allow URL updates on all subsequent changes
+setTimeout(() => {
+  isInitialLoad = false;
+}, 100);
 
 // ----------- Utility Functions -------------
 
@@ -1016,7 +1035,11 @@ function showInputAt(x, y) {
 
 function finishInput(input, x, y) {
   const name = input.value.trim();
-  document.body.removeChild(input);
+  try {
+    document.body.removeChild(input); 
+  } catch (e) {
+    return; // If input was already removed, just return
+  }
   if (!name) return;
 
   // Save state before adding new component for undo
@@ -1072,6 +1095,11 @@ function draw() {
   
   // Save to localStorage after every draw
   saveToLocalStorage();
+  
+  // Also update URL state asynchronously on every canvas change (unless this is the initial load)
+  if (!isInitialLoad) {
+    saveToURLAsync();
+  }
 }
 
 function drawFile(file, level = 0) {
@@ -1184,13 +1212,13 @@ function drawFile(file, level = 0) {
     // Draw event box title (event name) in bold
     const textColor = "#2d2d30";
     ctx.fillStyle = textColor;
-    ctx.font = "bold 18px 'Fira Code', 'Monaco', 'Menlo', monospace";
+    ctx.font = FONTS.EVENT_TITLE;
     ctx.fillText(file.name || 'Event', file.x + LAYOUT.COMPONENT.EVENT_TITLE_X_OFFSET, file.y + LAYOUT.COMPONENT.EVENT_TITLE_Y_OFFSET);
     
     // Draw event description with text wrapping
     if (file.description && file.description.trim()) {
       ctx.fillStyle = "#666666";
-      ctx.font = "12px 'Fira Code', 'Monaco', 'Menlo', monospace";
+      ctx.font = FONTS.EVENT_DESCRIPTION;
       
       const availableWidth = file.w - (LAYOUT.COMPONENT.EVENT_TITLE_X_OFFSET * 2);
       
@@ -1514,17 +1542,128 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ----------- Toolbar Functions -------------
+// ----------- URL State Management -------------
 
-function clearCanvas() {
-  if (confirm('Are you sure you want to clear all components? This cannot be undone.')) {
-    saveState(); // Save state before clearing for undo
-    files = [];
-    connections = []; // Clear all connections
-    clearSelection();
-    hoveredFile = null;
-    draw();
+// Throttling variables for async URL updates
+let urlUpdateTimeout = null;
+const URL_UPDATE_DELAY = 300; // milliseconds
+
+function saveToURL() {
+  try {
+    const projectData = {
+      files: files,
+      connections: connections,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Compress the data by converting to JSON and then base64
+    const jsonString = JSON.stringify(projectData);
+    const encodedData = btoa(encodeURIComponent(jsonString));
+    
+    // Update URL without triggering a page reload
+    const url = new URL(window.location);
+    url.searchParams.set('state', encodedData);
+    window.history.replaceState({}, '', url);
+    
+  } catch (error) {
+    console.warn('Failed to save to URL:', error);
   }
+}
+
+// Async wrapper for URL updates with throttling
+function saveToURLAsync() {
+  // Clear any pending URL update
+  if (urlUpdateTimeout) {
+    clearTimeout(urlUpdateTimeout);
+  }
+  
+  // Schedule URL update for the next tick, with throttling
+  urlUpdateTimeout = setTimeout(() => {
+    saveToURL();
+    urlUpdateTimeout = null;
+  }, URL_UPDATE_DELAY);
+}
+
+function loadFromURL() {
+  try {
+    const url = new URL(window.location);
+    const encodedState = url.searchParams.get('state');
+    
+    if (encodedState) {
+      // Decode the base64 data back to JSON
+      const jsonString = decodeURIComponent(atob(encodedState));
+      const projectData = JSON.parse(jsonString);
+      
+      if (projectData.files) {
+        files = projectData.files;
+      }
+      if (projectData.connections) {
+        // Reconstruct connections with proper component references
+        connections = reconstructConnections(projectData.connections, files);
+      }
+      
+      console.log('Loaded project from URL state');
+      return true;
+    }
+  } catch (error) {
+    console.warn('Failed to load from URL:', error);
+  }
+  return false;
+}
+
+function shareProject() {
+  saveToURL();
+  
+  // Copy URL to clipboard
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    // Show a temporary notification
+    showNotification('Project URL copied to clipboard! Share this link to let others view your canvas.');
+  }).catch(err => {
+    // Fallback: show the URL in a dialog
+    const url = window.location.href;
+    prompt('Copy this URL to share your project:', url);
+  });
+}
+
+function showNotification(message) {
+  // Create a temporary notification element
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+  `;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  // Animate in
+  setTimeout(() => {
+    notification.style.opacity = '1';
+    notification.style.transform = 'translateX(0)';
+  }, 100);
+  
+  // Animate out and remove
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        document.body.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
 }
 
 // ----------- Component Duplication -------------
@@ -2405,8 +2544,6 @@ canvas.addEventListener("mouseleave", (e) => {
   draw();
 });
 
-// Load from localStorage and then draw
-loadFromLocalStorage();
 draw();
 
 function findParentOfComponent(targetFile, searchList, parent = null) {
@@ -3310,3 +3447,12 @@ function removeConnectedTrigger(connectionId) {
     draw();
   }
 }
+
+// Cleanup pending URL updates on page unload
+window.addEventListener('beforeunload', () => {
+  if (urlUpdateTimeout) {
+    clearTimeout(urlUpdateTimeout);
+    // Force immediate URL save before page unload
+    saveToURL();
+  }
+});
