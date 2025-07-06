@@ -2785,7 +2785,7 @@ function drawArrow(fromX, fromY, toX, toY, isSelected = false, isHovered = false
   
   // Set style based on state
   if (isSelected) {
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle =  COLORS.MULTI_SELECTED;
     ctx.lineWidth = 3;
   } else if (isHovered) {
     ctx.strokeStyle = 'white';
@@ -2973,25 +2973,43 @@ function openConfigDrawer(item) {
   const drawer = document.getElementById('configDrawer');
   const drawerTitle = document.getElementById('drawerTitle');
   const componentContent = document.getElementById('componentConfigContent');
-  const eventContent = document.getElementById('eventConfigContent');
+  const hookContent = document.getElementById('hookConfigContent');
+  const triggerContent = document.getElementById('triggerConfigContent');
   
   drawer.classList.add('open');
   
   if (item.isEventBox) {
-    // Show event configuration content
-    drawerTitle.textContent = 'Hook Configuration';
+    // Hide component configuration content
     componentContent.style.display = 'none';
-    eventContent.style.display = 'block';
     
-    // Populate event box name
-    document.getElementById('eventBoxName').value = item.name || '';
-    
-    // Populate event box description
-    document.getElementById('eventBoxDescription').value = item.description || '';
+    if (item.type === 'HOOK') {
+      // Show hook configuration content
+      drawerTitle.textContent = 'Hook Configuration';
+      hookContent.style.display = 'block';
+      triggerContent.style.display = 'none';
+      
+      // Populate hook box name
+      document.getElementById('hookBoxName').value = item.name || '';
+      
+      // Populate hook box description
+      document.getElementById('hookBoxDescription').value = item.description || '';
+    } else if (item.type === 'TRIGGER') {
+      // Show trigger configuration content
+      drawerTitle.textContent = 'Trigger Configuration';
+      triggerContent.style.display = 'block';
+      hookContent.style.display = 'none';
+      
+      // Populate trigger box name
+      document.getElementById('triggerBoxName').value = item.name || '';
+      
+      // Populate trigger box actions
+      document.getElementById('triggerBoxActions').value = item.description || '';
+    }
   } else {
     // Show component configuration content
     drawerTitle.textContent = 'Component Configuration';
-    eventContent.style.display = 'none';
+    hookContent.style.display = 'none';
+    triggerContent.style.display = 'none';
     componentContent.style.display = 'block';
     
     // Populate component name
@@ -3037,10 +3055,10 @@ function closeConfigDrawer() {
   drawer.classList.remove('open');
 }
 
-function updateEventBoxName() {
-  if (!selectedFile || !selectedFile.isEventBox) return;
+function updateHookBoxName() {
+  if (!selectedFile || !selectedFile.isEventBox || selectedFile.type !== 'HOOK') return;
   
-  const newName = document.getElementById('eventBoxName').value.trim();
+  const newName = document.getElementById('hookBoxName').value.trim();
   if (newName !== selectedFile.name) {
     saveState(); // Save state before change for undo
     selectedFile.name = newName;
@@ -3048,13 +3066,35 @@ function updateEventBoxName() {
   }
 }
 
-function updateEventBoxDescription() {
-  if (!selectedFile || !selectedFile.isEventBox) return;
+function updateHookBoxDescription() {
+  if (!selectedFile || !selectedFile.isEventBox || selectedFile.type !== 'HOOK') return;
   
-  const newDescription = document.getElementById('eventBoxDescription').value;
+  const newDescription = document.getElementById('hookBoxDescription').value;
   if (newDescription !== selectedFile.description) {
     saveState(); // Save state before change for undo
     selectedFile.description = newDescription;
+    draw();
+  }
+}
+
+function updateTriggerBoxName() {
+  if (!selectedFile || !selectedFile.isEventBox || selectedFile.type !== 'TRIGGER') return;
+  
+  const newName = document.getElementById('triggerBoxName').value.trim();
+  if (newName !== selectedFile.name) {
+    saveState(); // Save state before change for undo
+    selectedFile.name = newName;
+    draw();
+  }
+}
+
+function updateTriggerBoxActions() {
+  if (!selectedFile || !selectedFile.isEventBox || selectedFile.type !== 'TRIGGER') return;
+  
+  const newActions = document.getElementById('triggerBoxActions').value;
+  if (newActions !== selectedFile.description) {
+    saveState(); // Save state before change for undo
+    selectedFile.description = newActions;
     draw();
   }
 }
@@ -3628,12 +3668,20 @@ document.getElementById("innerHtml").addEventListener("change", () => {
   updateInnerHtml();
 });
 
-document.getElementById("eventBoxName").addEventListener("change", () => {
-  updateEventBoxName();
+document.getElementById("hookBoxName").addEventListener("change", () => {
+  updateHookBoxName();
 });
 
-document.getElementById("eventBoxDescription").addEventListener("change", () => {
-  updateEventBoxDescription();
+document.getElementById("hookBoxDescription").addEventListener("change", () => {
+  updateHookBoxDescription();
+});
+
+document.getElementById("triggerBoxName").addEventListener("change", () => {
+  updateTriggerBoxName();
+});
+
+document.getElementById("triggerBoxActions").addEventListener("change", () => {
+  updateTriggerBoxActions();
 });
 
 // Cleanup pending URL updates on page unload
