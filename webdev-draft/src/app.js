@@ -228,6 +228,130 @@ let hoveredConnection = null; // Hovered connection for visual feedback
 let history = [];
 let maxHistorySize = 30;
 
+// ----------- URL State Management -------------
+
+// Throttling variables for async URL updates
+let urlUpdateTimeout = null;
+const URL_UPDATE_DELAY = 300; // milliseconds
+
+function saveToURL() {
+  try {
+    const projectData = {
+      files: files,
+      connections: connections,
+      timestamp: new Date().toISOString()
+    };
+    
+    // Compress the data by converting to JSON and then base64
+    const jsonString = JSON.stringify(projectData);
+    const encodedData = btoa(encodeURIComponent(jsonString));
+    
+    // Update URL without triggering a page reload
+    const url = new URL(window.location);
+    url.searchParams.set('state', encodedData);
+    window.history.replaceState({}, '', url);
+    
+  } catch (error) {
+    console.warn('Failed to save to URL:', error);
+  }
+}
+
+// Async wrapper for URL updates with throttling
+function saveToURLAsync() {
+  // Clear any pending URL update
+  if (urlUpdateTimeout) {
+    clearTimeout(urlUpdateTimeout);
+  }
+  
+  // Schedule URL update for the next tick, with throttling
+  urlUpdateTimeout = setTimeout(() => {
+    saveToURL();
+    urlUpdateTimeout = null;
+  }, URL_UPDATE_DELAY);
+}
+
+function loadFromURL() {
+  try {
+    const url = new URL(window.location);
+    const encodedState = url.searchParams.get('state');
+    
+    if (encodedState) {
+      // Decode the base64 data back to JSON
+      const jsonString = decodeURIComponent(atob(encodedState));
+      const projectData = JSON.parse(jsonString);
+      
+      if (projectData.files) {
+        files = projectData.files;
+      }
+      if (projectData.connections) {
+        // Reconstruct connections with proper component references
+        connections = reconstructConnections(projectData.connections, files);
+      }
+      
+      console.log('Loaded project from URL state');
+      return true;
+    }
+  } catch (error) {
+    console.warn('Failed to load from URL:', error);
+  }
+  return false;
+}
+
+function shareProject() {
+  saveToURL();
+  
+  // Copy URL to clipboard
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    // Show a temporary notification
+    showNotification('Project URL copied to clipboard! Share this link to let others view your canvas.');
+  }).catch(err => {
+    // Fallback: show the URL in a dialog
+    const url = window.location.href;
+    prompt('Copy this URL to share your project:', url);
+  });
+}
+
+function showNotification(message) {
+  // Create a temporary notification element
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+  `;
+  notification.textContent = message;
+  
+  document.body.appendChild(notification);
+  
+  // Animate in
+  setTimeout(() => {
+    notification.style.opacity = '1';
+    notification.style.transform = 'translateX(0)';
+  }, 100);
+  
+  // Animate out and remove
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100%)';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        document.body.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
+
 // Load initial state - URL has priority over localStorage
 const initiallyLoadedFromURL = loadFromURL(); // Try to load from URL first
 if (!initiallyLoadedFromURL) {
@@ -1582,130 +1706,6 @@ document.addEventListener('keydown', (e) => {
     draw();
   }
 });
-
-// ----------- URL State Management -------------
-
-// Throttling variables for async URL updates
-let urlUpdateTimeout = null;
-const URL_UPDATE_DELAY = 300; // milliseconds
-
-function saveToURL() {
-  try {
-    const projectData = {
-      files: files,
-      connections: connections,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Compress the data by converting to JSON and then base64
-    const jsonString = JSON.stringify(projectData);
-    const encodedData = btoa(encodeURIComponent(jsonString));
-    
-    // Update URL without triggering a page reload
-    const url = new URL(window.location);
-    url.searchParams.set('state', encodedData);
-    window.history.replaceState({}, '', url);
-    
-  } catch (error) {
-    console.warn('Failed to save to URL:', error);
-  }
-}
-
-// Async wrapper for URL updates with throttling
-function saveToURLAsync() {
-  // Clear any pending URL update
-  if (urlUpdateTimeout) {
-    clearTimeout(urlUpdateTimeout);
-  }
-  
-  // Schedule URL update for the next tick, with throttling
-  urlUpdateTimeout = setTimeout(() => {
-    saveToURL();
-    urlUpdateTimeout = null;
-  }, URL_UPDATE_DELAY);
-}
-
-function loadFromURL() {
-  try {
-    const url = new URL(window.location);
-    const encodedState = url.searchParams.get('state');
-    
-    if (encodedState) {
-      // Decode the base64 data back to JSON
-      const jsonString = decodeURIComponent(atob(encodedState));
-      const projectData = JSON.parse(jsonString);
-      
-      if (projectData.files) {
-        files = projectData.files;
-      }
-      if (projectData.connections) {
-        // Reconstruct connections with proper component references
-        connections = reconstructConnections(projectData.connections, files);
-      }
-      
-      console.log('Loaded project from URL state');
-      return true;
-    }
-  } catch (error) {
-    console.warn('Failed to load from URL:', error);
-  }
-  return false;
-}
-
-function shareProject() {
-  saveToURL();
-  
-  // Copy URL to clipboard
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    // Show a temporary notification
-    showNotification('Project URL copied to clipboard! Share this link to let others view your canvas.');
-  }).catch(err => {
-    // Fallback: show the URL in a dialog
-    const url = window.location.href;
-    prompt('Copy this URL to share your project:', url);
-  });
-}
-
-function showNotification(message) {
-  // Create a temporary notification element
-  const notification = document.createElement('div');
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    opacity: 0;
-    transform: translateX(100%);
-    transition: all 0.3s ease;
-  `;
-  notification.textContent = message;
-  
-  document.body.appendChild(notification);
-  
-  // Animate in
-  setTimeout(() => {
-    notification.style.opacity = '1';
-    notification.style.transform = 'translateX(0)';
-  }, 100);
-  
-  // Animate out and remove
-  setTimeout(() => {
-    notification.style.opacity = '0';
-    notification.style.transform = 'translateX(100%)';
-    setTimeout(() => {
-      if (notification.parentNode) {
-        document.body.removeChild(notification);
-      }
-    }, 300);
-  }, 3000);
-}
 
 // ----------- Component Duplication -------------
 
