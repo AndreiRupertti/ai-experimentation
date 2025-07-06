@@ -11,7 +11,7 @@
     
     body { 
       margin: 0; 
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       height: 100vh;
       overflow: hidden;
@@ -88,24 +88,24 @@
       box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
     }
     
-    .btn.inbound {
+    .btn.hook {
       background: linear-gradient(135deg, #ffd60a 0%, #ffbe0b 100%);
       color: #2d2d30;
       box-shadow: 0 2px 8px rgba(255, 214, 10, 0.3);
     }
     
-    .btn.inbound:hover {
+    .btn.hook:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(255, 214, 10, 0.4);
     }
     
-    .btn.outbound {
+    .btn.trigger {
       background: linear-gradient(135deg, #ff6b9d 0%, #ee5a6f 100%);
       color: white;
       box-shadow: 0 2px 8px rgba(255, 107, 157, 0.3);
     }
     
-    .btn.outbound:hover {
+    .btn.trigger:hover {
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(255, 107, 157, 0.4);
     }
@@ -118,13 +118,14 @@
     }
     
     .sidebar {
-      width: 280px;
+      width: 350px;
       background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
-      border-right: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: 1px solid rgba(255, 255, 255, 0.2);
       padding: 20px;
       overflow-y: auto;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+      order: 2;
     }
     
     .sidebar h3 {
@@ -193,6 +194,7 @@
       background: radial-gradient(circle at 20px 20px, rgba(255,255,255,0.15) 1px, transparent 1px);
       background-size: 40px 40px;
       overflow: hidden;
+      order: 1;
     }
     
     canvas { 
@@ -334,6 +336,23 @@
       background: #764ba2;
     }
     
+    .secondary-btn {
+      background: transparent;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+    
+    .secondary-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+    
     .close-drawer {
       position: absolute;
       top: 20px;
@@ -354,25 +373,54 @@
     .close-drawer:hover {
       background: rgba(255, 255, 255, 0.3);
     }
+    
+    /* Floating Toolbar */
+    .floating-toolbar {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      display: flex;
+      gap: 8px;
+      z-index: 150;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .floating-toolbar .btn {
+      margin: 0;
+      padding: 8px 14px;
+      font-size: 13px;
+    }
   </style>
 </head>
 <body>
   <div class="app-container">
     <div class="header">
       <div class="title">React Component Planner</div>
-      <div class="toolbar">
-        <button class="btn inbound" onclick="addInboundEvent()">
-          <span>�</span>
-          + Inbound
-        </button>
-        <button class="btn outbound" onclick="addOutboundEvent()">
-          <span>�</span>
-          + Outbound
-        </button>
-      </div>
     </div>
     
     <div class="main-content">
+      <div class="canvas-container">
+        <canvas id="board"></canvas>
+        
+        <!-- Floating Toolbar -->
+        <div class="floating-toolbar">
+          <button class="btn export" onclick="exportProject()" title="Export Project">
+            <span>💾</span>
+          </button>
+          <button class="btn import" onclick="importProject()" title="Import Project">
+            <span>📤</span>
+          </button>
+          <button class="btn clear" onclick="clearCanvas()" title="Clear Canvas">
+            <span>🗑️</span>
+          </button>
+        </div>
+      </div>
+      
       <div class="sidebar">
         <h3>🚀 Quick Start</h3>
         <ul class="instructions-list">
@@ -385,69 +433,100 @@
         </ul>
         
         <div class="legend">
-          <h4>Component Types</h4>
+          <h4>Node Types</h4>
           <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+            <div class="legend-color" style="background: #2d3142;"></div>
             <span>Component</span>
           </div>
           <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);"></div>
+            <div class="legend-color" style="background: #ffd60a;"></div>
             <span>Hook</span>
           </div>
           <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);"></div>
-            <span>Provider</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color" style="background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);"></div>
-            <span>Child Component</span>
+            <div class="legend-color" style="background: #ff6b9d;"></div>
+            <span>Trigger</span>
           </div>
         </div>
-      </div>
-      
-      <div class="canvas-container">
-        <canvas id="board"></canvas>
       </div>
     </div>
   </div>
   
   <!-- Configuration Drawer -->
+  <!-- Unified Configuration Drawer -->
   <div id="configDrawer" class="config-drawer">
     <div class="config-header">
-      <h3>Component Configuration</h3>
+      <h3 id="drawerTitle">Configuration</h3>
       <button class="close-drawer" onclick="closeConfigDrawer()">×</button>
     </div>
     <div class="config-content">
-      <div class="config-section">
-        <h4>📝 Component Name</h4>
-        <div class="form-group">
-          <label for="componentName">Name</label>
-          <input type="text" id="componentName" class="form-input" placeholder="Component name" onchange="updateComponentName()">
+      <!-- Component Configuration Content -->
+      <div id="componentConfigContent" class="config-mode" style="display: none;">
+        <div class="config-section">
+          <h4>📝 Component Name</h4>
+          <div class="form-group">
+            <label for="componentName">Name</label>
+            <input type="text" id="componentName" class="form-input" placeholder="Component name" onchange="updateComponentName()">
+          </div>
         </div>
-      </div>
-      
-      <div class="config-section">
-        <h4>⚙️ Props</h4>
-        <div id="propsList">
-          <!-- Props will be dynamically added here -->
+        
+        <div class="config-section">
+          <h4>⚙️ Props</h4>
+          <div id="propsList">
+            <!-- Props will be dynamically added here -->
+          </div>
+          <button class="add-btn" onclick="addProp()">+ Add Prop</button>
         </div>
-        <button class="add-btn" onclick="addProp()">+ Add Prop</button>
-      </div>
-      
-      <div class="config-section">
-        <h4>📄 Inner HTML</h4>
-        <div class="form-group">
-          <label for="innerHtml">Content</label>
-          <textarea id="innerHtml" class="form-input" placeholder="Inner HTML content, {children}, Hello World, etc.." onchange="updateInnerHtml()" rows="3"></textarea>
+
+        <div class="config-section">
+          <h4>📡 Hooks</h4>
+          <div id="connectedHooksList">
+            <!-- Connected hooks will be displayed here -->
+          </div>
+          <div id="eventsList">
+            <!-- Events will be dynamically added here -->
+          </div>
+          <div id="hookInputsList">
+            <!-- Hook inputs will be dynamically added here -->
+          </div>
+          <button class="add-btn" onclick="addHookInput()">+ Add Hook</button>
+        </div>
+
+        <div class="config-section">
+          <h4>⚡ Triggers</h4>
+          <div id="connectedTriggersList">
+            <!-- Connected triggers will be displayed here -->
+          </div>
+          <div id="triggerInputsList">
+            <!-- Trigger inputs will be dynamically added here -->
+          </div>
+          <button class="add-btn" onclick="addTriggerInput()">+ Add Trigger</button>
+        </div>
+
+        <div class="config-section">
+          <h4>📄 Inner HTML</h4>
+          <div class="form-group">
+            <textarea id="innerHtml" class="form-input" placeholder="Inner HTML content, {children}, Hello World, etc.." onchange="updateInnerHtml()" rows="3"></textarea>
+          </div>
         </div>
       </div>
 
-      <div class="config-section">
-        <h4>📡 Inbound Events</h4>
-        <div id="eventsList">
-          <!-- Events will be dynamically added here -->
+      <!-- Event Box Configuration Content -->
+      <div id="eventConfigContent" class="config-mode" style="display: none;">
+        <div class="config-section">
+          <h4>📝 Event Name</h4>
+          <div class="form-group">
+            <label for="eventBoxName">Name</label>
+            <input type="text" id="eventBoxName" class="form-input" placeholder="Event name" onchange="updateEventBoxName()">
+          </div>
         </div>
-        <button class="add-btn" onclick="addEvent()">+ Add Event</button>
+        
+        <div class="config-section">
+          <h4>📄 Description</h4>
+          <div class="form-group">
+            <label for="eventBoxDescription">Description</label>
+            <textarea id="eventBoxDescription" class="form-input" placeholder="Event description" onchange="updateEventBoxDescription()" rows="3"></textarea>
+          </div>
+        </div>
       </div>
     </div>
   </div>
